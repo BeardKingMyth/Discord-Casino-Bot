@@ -3,6 +3,10 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import asyncio
+from utils.helpers import init_db
+
+asyncio.run(init_db())
+
 
 load_dotenv()  # Loads .env file
 TOKEN = os.getenv('DISCORD_TOKEN')
