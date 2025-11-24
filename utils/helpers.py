@@ -1,19 +1,17 @@
 import asyncpg
 from datetime import datetime
+from dotenv import load_dotenv
+import os
 
-# ---------------- CONFIG ----------------
-DB_CONFIG = {
-    "user": "postgres",            # your Supabase DB user
-    "password": "OI123585321l0",# your Supabase DB password
-    "database": "postgres",        # your DB name (usually 'postgres')
-    "host": "db.qkhvpezazdfjqwdywjrq.supabase.co", # your Supabase host
-    "port": 5432,
-    "ssl": True                    # Supabase requires SSL
-}
 
 # ----------------- DATABASE CONNECTION -----------------
+load_dotenv()  # loads .env variables
+DB_DSN = os.getenv("SUPABASE_DB_URL")
+if not DB_DSN:
+    raise ValueError("SUPABASE_DB_URL env var is not set!")
+
 async def get_connection():
-    return await asyncpg.connect(**DB_CONFIG)
+    return await asyncpg.connect(dsn=DB_DSN)
 
 # ----------------- INITIALIZATION -----------------
 async def init_db():

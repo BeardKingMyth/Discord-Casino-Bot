@@ -22,10 +22,10 @@ def card_value(card):
         return int(rank)
 
 class War(commands.Cog):
-    def __init__(self, bot, frozen_users=None, banned_users=None):
+    async def __init__(self, bot, frozen_users=None, banned_users=None):
         print("War cog initialized.")
         self.bot = bot
-        self.balances = load_balances()
+        self.balances = await load_balances()
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
         self.active_games = {}  # game_id -> game state
@@ -41,16 +41,16 @@ class War(commands.Cog):
         opponent_id = str(opponent.id)
 
         # Use helper functions
-        if is_user_banned(challenger_id, self.banned_users):
+        if await is_user_banned(challenger_id, self.banned_users):
             await ctx.send(f"{ctx.author.mention} is banned from the economy and cannot play games.")
             return
-        if is_user_frozen(challenger_id, self.frozen_users):
+        if await is_user_frozen(challenger_id, self.frozen_users):
             await ctx.send(f"{ctx.author.mention} is currently frozen and cannot play games.")
             return
-        if is_user_banned(opponent_id, self.banned_users):
+        if await is_user_banned(opponent_id, self.banned_users):
             await ctx.send(f"{opponent.mention} is banned from the economy and cannot play games.")
             return
-        if is_user_frozen(opponent_id, self.frozen_users):
+        if await is_user_frozen(opponent_id, self.frozen_users):
             await ctx.send(f"{opponent.mention} is currently frozen and cannot play games.")
             return
 
@@ -92,16 +92,16 @@ class War(commands.Cog):
         challenger_id = str(challenger.id)
 
         # Use helper functions
-        if is_user_banned(opponent_id, self.banned_users):
+        if await is_user_banned(opponent_id, self.banned_users):
             await ctx.send(f"{ctx.author.mention} is banned from the economy and cannot play games.")
             return
-        if is_user_frozen(opponent_id, self.frozen_users):
+        if await is_user_frozen(opponent_id, self.frozen_users):
             await ctx.send(f"{ctx.author.mention} is currently frozen and cannot play games.")
             return
-        if is_user_banned(challenger_id, self.banned_users):
+        if await is_user_banned(challenger_id, self.banned_users):
             await ctx.send(f"{challenger.mention} is banned from the economy and cannot play games.")
             return
-        if is_user_frozen(challenger_id, self.frozen_users):
+        if await is_user_frozen(challenger_id, self.frozen_users):
             await ctx.send(f"{challenger.mention} is currently frozen and cannot play games.")
             return
 
@@ -133,7 +133,7 @@ class War(commands.Cog):
         # Remove challenge
         del self.challenges[opponent_id]
 
-        save_balances(self.balances)
+        await save_balances(self.balances)
         await ctx.send(f"War game started between {challenger.mention} and {ctx.author.mention}! Type `!war_flip` to play a turn.")
 
     # -----------------------------
@@ -144,12 +144,12 @@ class War(commands.Cog):
         """Play War against the dealer."""
         user_id = str(ctx.author.id)
 
-        if user_id in self.banned_users:
+        # Use helper functions
+        if await is_user_banned(user_id, self.banned_users):
             await ctx.send("You are banned from the economy and cannot play games.")
             return
-
-        if user_id in self.frozen_users:
-            await ctx.send("Your account is frozen and you cannot play games.")
+        if await is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
             return
 
         if user_id not in self.balances:
@@ -178,7 +178,7 @@ class War(commands.Cog):
             'bet': bet
         }
 
-        save_balances(self.balances)
+        await save_balances(self.balances)
         await ctx.send(f"War game started against the dealer! Type `!war_flip` to play a turn.")
 
     # -----------------------------
@@ -190,10 +190,10 @@ class War(commands.Cog):
         user_id = str(ctx.author.id)
 
         # Use helper functions
-        if is_user_banned(user_id, self.banned_users):
+        if await is_user_banned(user_id, self.banned_users):
             await ctx.send("You are banned from the economy and cannot play games.")
             return
-        if is_user_frozen(user_id, self.frozen_users):
+        if await is_user_frozen(user_id, self.frozen_users):
             await ctx.send("You are currently frozen and cannot play games.")
             return
 
@@ -291,14 +291,14 @@ class War(commands.Cog):
                 self.balances[winner_id] += 2 * game['bet']
             elif winner_id == 'dealer':
                 self.balances[game['player1_id']] += 0  # player lost
-            save_balances(self.balances)
+            await save_balances(self.balances)
             del self.active_games[game_id]
             result_text += f"Game over! <@{winner_id}> wins the War!"
         elif len(game['player2_deck']) == 0:
             loser = game['player2_id']
             winner_id = game['player1_id']
             self.balances[winner_id] += 2 * game['bet']
-            save_balances(self.balances)
+            await save_balances(self.balances)
             del self.active_games[game_id]
             result_text += f"Game over! <@{winner_id}> wins the War!"
 
@@ -313,10 +313,10 @@ class War(commands.Cog):
         user_id = str(ctx.author.id)
 
         # Use helper functions
-        if is_user_banned(user_id, self.banned_users):
+        if await is_user_banned(user_id, self.banned_users):
             await ctx.send("You are banned from the economy and cannot play games.")
             return
-        if is_user_frozen(user_id, self.frozen_users):
+        if await is_user_frozen(user_id, self.frozen_users):
             await ctx.send("You are currently frozen and cannot play games.")
             return
 
@@ -338,7 +338,7 @@ class War(commands.Cog):
             forfeited_player = self.active_games[game_to_delete]['player2_id']
             if self.active_games[game_to_delete]['player1_id'] != 'dealer':
                 self.balances[self.active_games[game_to_delete]['player1_id']] += 2 * bet
-        save_balances(self.balances)
+        await save_balances(self.balances)
         del self.active_games[game_to_delete]
         await ctx.send(f"<@{user_id}> forfeited the War game!")
 

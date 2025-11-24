@@ -7,12 +7,12 @@ from utils.helpers import load_balances, save_balances, is_user_banned, is_user_
 # ============================
 
 class Roulette(commands.Cog):
-    def __init__(self, bot, frozen_users=None, banned_users=None):
+    async def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
         print("Roulette cog initialized.")
-        self.balances = load_balances()
+        self.balances = await load_balances()
 
         # American roulette numbers
         self.numbers = [
@@ -102,10 +102,10 @@ class Roulette(commands.Cog):
 
         user_id = str(ctx.author.id)
 
-        if is_user_banned(user_id, self.banned_users):
+        if await is_user_banned(user_id, self.banned_users):
             await ctx.send("You are banned from the economy and cannot play games.")
             return
-        if is_user_frozen(user_id, self.frozen_users):
+        if await is_user_frozen(user_id, self.frozen_users):
             await ctx.send("You are currently frozen and cannot play games.")
             return
 
@@ -142,7 +142,7 @@ class Roulette(commands.Cog):
             outcome = "You lost your bet."
 
         # Save balances
-        save_balances(self.balances)
+        await save_balances(self.balances)
 
         # Respond with result
         await ctx.send(

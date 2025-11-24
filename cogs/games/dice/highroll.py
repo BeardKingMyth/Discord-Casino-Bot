@@ -3,9 +3,10 @@ import random
 from utils.helpers import load_balances, save_balances, is_user_banned, is_user_frozen
 
 class HighRoll(commands.Cog):
-    def __init__(self, bot, frozen_users=None, banned_users=None):
+    async def __init__(self, bot, frozen_users=None, banned_users=None):
         print("Highroll cog initialized.")
         self.bot = bot
+        self.balances = await load_balances()
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
 
@@ -17,10 +18,10 @@ class HighRoll(commands.Cog):
         """
         user_id = str(ctx.author.id)
 
-        if is_user_banned(user_id, self.banned_users):
+        if await is_user_banned(user_id, self.banned_users):
             await ctx.send("You are banned from the economy and cannot play games.")
             return
-        if is_user_frozen(user_id, self.frozen_users):
+        if await is_user_frozen(user_id, self.frozen_users):
             await ctx.send("You are currently frozen and cannot play games.")
             return
         
@@ -57,7 +58,7 @@ class HighRoll(commands.Cog):
                       f"The house rolled **{house_roll}**. "
                       f"It's a tie — no money changes hands.")
 
-        save_balances(self.balances)
+        await save_balances(self.balances)
         await ctx.send(result)
 
 async def setup(bot):

@@ -6,14 +6,13 @@ import random
 from utils.helpers import load_balances, save_balances, load_claims, save_claims, is_user_banned, is_user_frozen
 
 class Daily(commands.Cog):
-    def __init__(self, bot, frozen_users=None, banned_users=None):
+    async def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
-        self.balances = load_balances()
+        self.balances = await load_balances()
         self.frozen_users = frozen_users if frozen_users is not None else set()
         self.banned_users = banned_users if banned_users is not None else set()
         print("Daily cog initialized.")
-        self.balances = load_balances()
-        self.claims = load_claims()
+        self.claims = await load_claims()
 
     @commands.command(name="daily")
     async def daily(self, ctx):
@@ -22,10 +21,10 @@ class Daily(commands.Cog):
         now = datetime.now(datetime.timezone.utc)
 
         # Use helper functions
-        if is_user_banned(user_id, self.banned_users):
+        if await is_user_banned(user_id, self.banned_users):
             await ctx.send("You are banned from the economy and cannot play games.")
             return
-        if is_user_frozen(user_id, self.frozen_users):
+        if await is_user_frozen(user_id, self.frozen_users):
             await ctx.send("You are currently frozen and cannot play games.")
             return
 
@@ -53,8 +52,8 @@ class Daily(commands.Cog):
         self.claims[user_id] = now.isoformat()
 
         # Save data
-        save_balances(self.balances)
-        save_claims(self.claims)
+        await save_balances(self.balances)
+        await save_claims(self.claims)
 
         await ctx.send(
             f"{ctx.author.mention} You claimed your daily reward of **${reward}**! "

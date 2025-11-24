@@ -1,12 +1,12 @@
 from discord.ext import commands
-from utils.helpers import load_balances, save_balances
+from utils.helpers import load_balances, save_balances, set_user_frozen, set_user_banned
 
 class EconomyAdmin(commands.Cog):
     """Commands for admins/mods to adjust user balances."""
 
-    def __init__(self, bot):
+    async def __init__(self, bot):
         self.bot = bot
-        self.balances = load_balances()
+        self.balances = await load_balances()
         self.frozen_users = set()  # user_ids of frozen users
         self.banned_users = set()  # user_ids banned from economy
         print("EconomyAdmin cog initialized.")
@@ -24,7 +24,7 @@ class EconomyAdmin(commands.Cog):
             self.balances[user_id] = 1000  # default starting balance
 
         self.balances[user_id] += amount
-        save_balances(self.balances)
+        await save_balances(self.balances)
 
         action = "added to" if amount >= 0 else "removed from"
         await ctx.send(
@@ -46,7 +46,7 @@ class EconomyAdmin(commands.Cog):
             return
 
         self.balances[user_id] = amount
-        save_balances(self.balances)
+        await save_balances(self.balances)
 
         await ctx.send(
             f"{member.display_name}'s balance has been set to ${self.balances[user_id]}"
@@ -59,7 +59,7 @@ class EconomyAdmin(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     async def freeze_player(self, ctx, member: commands.MemberConverter):
         user_id = str(member.id)
-        self.frozen_users.add(user_id)
+        await set_user_frozen(user_id, True)   # <- save to DB
         await ctx.send(f"{member.display_name} is now frozen and cannot play any games.")
 
     # -----------------------------
@@ -69,7 +69,7 @@ class EconomyAdmin(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     async def unfreeze_player(self, ctx, member: commands.MemberConverter):
         user_id = str(member.id)
-        self.frozen_users.discard(user_id)
+        await set_user_frozen(user_id, False)   # <- save to DB
         await ctx.send(f"{member.display_name} has been unfrozen and can play again.")
 
     # -----------------------------
@@ -79,7 +79,7 @@ class EconomyAdmin(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     async def ban_economy(self, ctx, member: commands.MemberConverter):
         user_id = str(member.id)
-        self.banned_users.add(user_id)
+        await set_user_banned(user_id, True)   # <- save to DB
         await ctx.send(f"{member.display_name} has been banned from the economy system.")
 
     # -----------------------------
@@ -89,7 +89,7 @@ class EconomyAdmin(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     async def unban_economy(self, ctx, member: commands.MemberConverter):
         user_id = str(member.id)
-        self.banned_users.discard(user_id)
+        await set_user_banned(user_id, False)   # <- save to DB
         await ctx.send(f"{member.display_name} has been unbanned from the economy system.")
 
     # -----------------------------
@@ -103,7 +103,7 @@ class EconomyAdmin(commands.Cog):
             return
         for user_id in self.balances:
             self.balances[user_id] += amount
-        save_balances(self.balances)
+        await save_balances(self.balances)
         await ctx.send(f"Mass payout complete! Every user received ${amount}.")
 
 # -----------------------------
