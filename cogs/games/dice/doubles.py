@@ -1,6 +1,6 @@
 from discord.ext import commands
 import random
-from utils.helpers import load_balances, save_balances
+from utils.helpers import load_balances, save_balances, is_user_banned, is_user_frozen
 
 class Doubles(commands.Cog):
     def __init__(self, bot, frozen_users=None, banned_users=None):
