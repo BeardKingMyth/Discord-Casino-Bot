@@ -94,10 +94,6 @@ bot.py
 - discord.py 2.3+
 - A Discord bot token
 
-# Install dependencies:
-
-```pip install -r requirements.txt```
-
 # Running the Bot
 
 1. Create a .env file or otherwise supply your bot token.
@@ -113,3 +109,4 @@ The bot will automatically load all cogs and create a balance file as needed.
 - All game logic is modular and can be expanded by adding new files to cogs/games/.
 - Admin commands require the user to have the Manage Roles permission.
 - Balances are stored using helper functions in utils/helpers.py.
+- Main currently stores data in JSON files. Branch is in progress to implement database storage.
