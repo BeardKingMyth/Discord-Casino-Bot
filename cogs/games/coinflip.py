@@ -3,12 +3,16 @@ import random
 from utils.helpers import load_balances, save_balances, is_user_banned, is_user_frozen
 
 class CoinFlip(commands.Cog):
-    async def __init__(self, bot, frozen_users=None, banned_users=None):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         print("Coinflip cog initialized.")
         self.bot = bot
-        self.balances = await load_balances()
+        self.balances = {}
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
+
+    async def async_init(self):
+        self.balances = await load_balances()
+        print("Coinflip cog async initialized")
 
     @commands.command(name="coinflip")
     async def coinflip(self, ctx, bet: int, choice: str):
@@ -57,5 +61,8 @@ async def setup(bot):
     from cogs.admin import EconomyAdmin
     frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
     banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
-    await bot.add_cog(CoinFlip(bot, frozen_users=frozen, banned_users=banned))
+    cog = CoinFlip(bot, frozen_users=frozen, banned_users=banned)
+    await bot.add_cog(cog)
+    await cog.async_init()  # now safely await DB setup
+    
 

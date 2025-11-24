@@ -22,14 +22,18 @@ def card_value(card):
         return int(rank)
 
 class War(commands.Cog):
-    async def __init__(self, bot, frozen_users=None, banned_users=None):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         print("War cog initialized.")
         self.bot = bot
-        self.balances = await load_balances()
+        self.balances = {}
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
         self.active_games = {}  # game_id -> game state
         self.challenges = {}    # challenged_user_id -> challenger_user_id
+
+    async def async_init(self):
+        self.balances = await load_balances()
+        print("War cog async initialized")
 
     # -----------------------------
     #      Start Challenge
@@ -350,4 +354,6 @@ async def setup(bot):
     from cogs.admin import EconomyAdmin
     frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
     banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
-    await bot.add_cog(War(bot, frozen_users=frozen, banned_users=banned))
+    cog = War(bot, frozen_users=frozen, banned_users=banned)
+    await bot.add_cog(cog)
+    await cog.async_init()  # now safely await DB setup

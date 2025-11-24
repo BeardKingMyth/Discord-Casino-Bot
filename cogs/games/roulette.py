@@ -7,12 +7,17 @@ from utils.helpers import load_balances, save_balances, is_user_banned, is_user_
 # ============================
 
 class Roulette(commands.Cog):
-    async def __init__(self, bot, frozen_users=None, banned_users=None):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
         print("Roulette cog initialized.")
+        self.balances = {}
+
+    async def async_init(self):
         self.balances = await load_balances()
+        print("Roulette cog async initialized")
+
 
         # American roulette numbers
         self.numbers = [
@@ -158,5 +163,7 @@ async def setup(bot):
     from cogs.admin import EconomyAdmin
     frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
     banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
-    await bot.add_cog(Roulette(bot, frozen_users=frozen, banned_users=banned))
+    cog = Roulette(bot, frozen_users=frozen, banned_users=banned)
+    await bot.add_cog(cog)
+    await cog.async_init()  # now safely await DB setup
 

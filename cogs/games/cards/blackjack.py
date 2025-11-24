@@ -30,13 +30,17 @@ def hand_value(hand):
     return value
 
 class Blackjack(commands.Cog):
-    async def __init__(self, bot, frozen_users=None, banned_users=None):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
         print("Blackjack cog initialized.")
-        self.balances = await load_balances()
+        self.balances = {}
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
         self.active_games = {}  # Track ongoing games per user
+
+    async def async_init(self):
+        self.balances = await load_balances()
+        print("Blackjack cog async initialized")
 
     @commands.command(name="blackjack")
     async def blackjack(self, ctx, bet: int):
@@ -173,4 +177,6 @@ async def setup(bot):
     from cogs.admin import EconomyAdmin
     frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
     banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
-    await bot.add_cog(Blackjack(bot, frozen_users=frozen, banned_users=banned))
+    cog = Blackjack(bot, frozen_users=frozen, banned_users=banned)
+    await bot.add_cog(cog)
+    await cog.async_init()  # now safely await DB setup

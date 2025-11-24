@@ -2,12 +2,17 @@ from discord.ext import commands
 from utils.helpers import load_balances, save_balances, is_user_frozen, is_user_banned
 
 class Economy(commands.Cog):
-    async def __init__(self, bot, frozen_users=None, banned_users=None):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
-        self.balances = await load_balances()
+        self.balances = {}  # placeholder
         self.frozen_users = frozen_users if frozen_users is not None else set()
         self.banned_users = banned_users if banned_users is not None else set()
         print("Economy cog initialized")
+
+        async def async_init(self):
+            self.balances = await load_balances()
+            print("Economy cog async initialized")
+
 
     @commands.command(name="balance")
     async def balance(self, ctx):
@@ -32,5 +37,8 @@ async def setup(bot):
     from cogs.admin import EconomyAdmin
     frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
     banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
-    await bot.add_cog(Economy(bot, frozen_users=frozen, banned_users=banned))
+    
+    cog = Economy(bot, frozen_users=frozen, banned_users=banned)
+    await bot.add_cog(cog)
+    await cog.async_init()  # now safely await DB setup
     print("Economy cog loaded")

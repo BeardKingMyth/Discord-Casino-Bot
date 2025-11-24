@@ -3,13 +3,17 @@ from discord.ext import commands
 from utils.helpers import load_balances, save_balances, is_user_banned, is_user_frozen
 
 class DiceBlackjack(commands.Cog):
-    async def __init__(self, bot, frozen_users=None, banned_users=None):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         print("Dice_blackjack cog initialized.")
         self.bot = bot
-        self.balances = await load_balances()
+        self.balances = {}
         self.frozen_users = frozen_users if frozen_users else set()
         self.banned_users = banned_users if banned_users else set()
         self.active_games = {}  # user_id -> { "total": int, "bet": int, "rolls": [] }
+
+    async def async_init(self):
+        self.balances = await load_balances()
+        print("Dice_blackjack cog async initialized")
 
     # Start the game
     @commands.command(name="dice21")
@@ -169,4 +173,6 @@ async def setup(bot):
     from cogs.admin import EconomyAdmin
     frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
     banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
-    await bot.add_cog(DiceBlackjack(bot, frozen_users=frozen, banned_users=banned))
+    cog = DiceBlackjack(bot, frozen_users=frozen, banned_users=banned)
+    await bot.add_cog(cog)
+    await cog.async_init()  # now safely await DB setup

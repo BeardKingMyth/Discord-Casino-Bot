@@ -4,12 +4,16 @@ from utils.helpers import load_balances, save_balances, set_user_frozen, set_use
 class EconomyAdmin(commands.Cog):
     """Commands for admins/mods to adjust user balances."""
 
-    async def __init__(self, bot):
+    def __init__(self, bot):
         self.bot = bot
-        self.balances = await load_balances()
+        self.balances = {}
         self.frozen_users = set()  # user_ids of frozen users
         self.banned_users = set()  # user_ids banned from economy
         print("EconomyAdmin cog initialized.")
+
+    async def async_init(self):
+        self.balances = await load_balances()
+        print("EconomyAdmin cog asyn initialized.")
 
     # -----------------------------
     #      Add/Subtract Balance
@@ -111,4 +115,6 @@ class EconomyAdmin(commands.Cog):
 # -----------------------------
 async def setup(bot):
     print("EconomyAdmin cog loaded.")
-    await bot.add_cog(EconomyAdmin(bot))
+    cog = EconomyAdmin(bot)
+    await bot.add_cog(cog)
+    await cog.async_init()  # now safely await DB setup
