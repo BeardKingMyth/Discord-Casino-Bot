@@ -1,15 +1,32 @@
 import json
 from pathlib import Path
 
-DATA_FILE = Path("data/balances.json")
+# File paths
+BALANCES_FILE = Path("data/balances.json")
+DAILY_FILE = Path("data/daily_claims.json")
 
-def load_balances():
-    if not DATA_FILE.exists():
+# Generic JSON loader/saver
+def load_json(file_path):
+    if not file_path.exists():
         return {}
-    with open(DATA_FILE, "r") as f:
+    with open(file_path, "r") as f:
         return json.load(f)
 
+def save_json(data, file_path):
+    file_path.parent.mkdir(exist_ok=True)
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
+
+# Convenience functions for balances
+def load_balances():
+    return load_json(BALANCES_FILE)
+
 def save_balances(balances):
-    DATA_FILE.parent.mkdir(exist_ok=True)
-    with open(DATA_FILE, "w") as f:
-        json.dump(balances, f, indent=4)
+    save_json(balances, BALANCES_FILE)
+
+# Convenience functions for daily claims
+def load_claims():
+    return load_json(DAILY_FILE)
+
+def save_claims(claims):
+    save_json(claims, DAILY_FILE)
