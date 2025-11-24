@@ -1,6 +1,6 @@
 from discord.ext import commands
 import random
-from utils.helpers import load_balances, save_balances
+from utils.helpers import load_balances, save_balances, is_user_banned, is_user_frozen
 
 # ============================
 #       BLACKJACK COG
@@ -30,16 +30,26 @@ def hand_value(hand):
     return value
 
 class Blackjack(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
         print("Blackjack cog initialized.")
         self.balances = load_balances()
+        self.frozen_users = frozen_users if frozen_users else set()
+        self.banned_users = banned_users if banned_users else set()
         self.active_games = {}  # Track ongoing games per user
 
     @commands.command(name="blackjack")
     async def blackjack(self, ctx, bet: int):
         """Start a game of blackjack!"""
         user_id = str(ctx.author.id)
+
+        # Use helper functions
+        if is_user_banned(user_id, self.banned_users):
+            await ctx.send("You are banned from the economy and cannot play games.")
+            return
+        if is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
+            return
 
         # Ensure player exists
         if user_id not in self.balances:
@@ -92,6 +102,15 @@ class Blackjack(commands.Cog):
     @commands.command(name="bjhit")
     async def hit(self, ctx):
         user_id = str(ctx.author.id)
+
+        # Use helper functions
+        if is_user_banned(user_id, self.banned_users):
+            await ctx.send("You are banned from the economy and cannot play games.")
+            return
+        if is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
+            return
+
         if user_id not in self.active_games:
             await ctx.send("You don’t have an active blackjack game!")
             return
@@ -111,8 +130,13 @@ class Blackjack(commands.Cog):
     @commands.command(name="bjstand")
     async def stand(self, ctx):
         user_id = str(ctx.author.id)
-        if user_id not in self.active_games:
-            await ctx.send("You don’t have an active blackjack game!")
+
+        # Use helper functions
+        if is_user_banned(user_id, self.banned_users):
+            await ctx.send("You are banned from the economy and cannot play games.")
+            return
+        if is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
             return
 
         game = self.active_games[user_id]
@@ -146,4 +170,7 @@ class Blackjack(commands.Cog):
 # Setup cog
 async def setup(bot):
     print("Blackjack cog loaded.")
-    await bot.add_cog(Blackjack(bot))
+    from cogs.admin import EconomyAdmin
+    frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
+    banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
+    await bot.add_cog(Blackjack(bot, frozen_users=frozen, banned_users=banned))

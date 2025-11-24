@@ -3,11 +3,14 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta
 import random
-from utils.helpers import load_balances, save_balances, load_claims, save_claims
+from utils.helpers import load_balances, save_balances, load_claims, save_claims, is_user_banned, is_user_frozen
 
 class Daily(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
+        self.balances = load_balances()
+        self.frozen_users = frozen_users if frozen_users is not None else set()
+        self.banned_users = banned_users if banned_users is not None else set()
         print("Daily cog initialized.")
         self.balances = load_balances()
         self.claims = load_claims()
@@ -16,7 +19,15 @@ class Daily(commands.Cog):
     async def daily(self, ctx):
         """Claim your daily reward (24h cooldown)."""
         user_id = str(ctx.author.id)
-        now = datetime.utcnow()
+        now = datetime.now(datetime.timezone.utc)
+
+        # Use helper functions
+        if is_user_banned(user_id, self.banned_users):
+            await ctx.send("You are banned from the economy and cannot play games.")
+            return
+        if is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
+            return
 
         # Ensure player exists
         if user_id not in self.balances:
@@ -53,4 +64,8 @@ class Daily(commands.Cog):
 # Setup cog
 async def setup(bot):
     print("Daily cog loaded.")
-    await bot.add_cog(Daily(bot))
+    # Pass in frozen/banned sets from the admin cog if desired
+    from cogs.admin import EconomyAdmin
+    frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
+    banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
+    await bot.add_cog(Daily(bot, frozen_users=frozen, banned_users=banned))

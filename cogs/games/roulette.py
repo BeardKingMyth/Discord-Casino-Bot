@@ -1,14 +1,16 @@
 from discord.ext import commands
 import random
-from utils.helpers import load_balances, save_balances
+from utils.helpers import load_balances, save_balances, is_user_banned, is_user_frozen
 
 # ============================
 #      ROULETTE COG
 # ============================
 
 class Roulette(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
         self.bot = bot
+        self.frozen_users = frozen_users if frozen_users else set()
+        self.banned_users = banned_users if banned_users else set()
         print("Roulette cog initialized.")
         self.balances = load_balances()
 
@@ -100,6 +102,13 @@ class Roulette(commands.Cog):
 
         user_id = str(ctx.author.id)
 
+        if is_user_banned(user_id, self.banned_users):
+            await ctx.send("You are banned from the economy and cannot play games.")
+            return
+        if is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
+            return
+
         # Ensure player exists
         if user_id not in self.balances:
             self.balances[user_id] = 1000
@@ -146,4 +155,8 @@ class Roulette(commands.Cog):
 # Setup cog
 async def setup(bot):
     print("Roulette cog loaded.")
-    await bot.add_cog(Roulette(bot))
+    from cogs.admin import EconomyAdmin
+    frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
+    banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
+    await bot.add_cog(Roulette(bot, frozen_users=frozen, banned_users=banned))
+

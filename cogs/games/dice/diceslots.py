@@ -1,16 +1,29 @@
 from discord.ext import commands
 import random
-from utils.helpers import load_balances, save_balances
+from utils.helpers import load_balances, save_balances, is_user_banned, is_user_frozen
 
 class DiceSlots(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
+        print("Diceslots cog initialized.")
         self.bot = bot
         self.balances = load_balances()
+        self.frozen_users = frozen_users if frozen_users else set()
+        self.banned_users = banned_users if banned_users else set()
+
 
     @commands.command(name="diceslots")
     async def diceslots(self, ctx, bet: int):
         """Roll 3 dice and win based on combinations! Usage: !diceslots <bet>"""
         user_id = str(ctx.author.id)
+
+        # Use helper functions
+        if is_user_banned(user_id, self.banned_users):
+            await ctx.send("You are banned from the economy and cannot play games.")
+            return
+        if is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
+            return
+
 
         # Initialize balance if new user
         if user_id not in self.balances:
@@ -56,4 +69,9 @@ class DiceSlots(commands.Cog):
         await ctx.send(f"{ctx.author.name} rolled {dice}.\n{message}\nNew balance: ${self.balances[user_id]}")
 
 async def setup(bot):
-    await bot.add_cog(DiceSlots(bot))
+    print("Diceslots cog loaded.")
+    from cogs.admin import EconomyAdmin
+    frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
+    banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
+    await bot.add_cog(DiceSlots(bot, frozen_users=frozen, banned_users=banned))
+

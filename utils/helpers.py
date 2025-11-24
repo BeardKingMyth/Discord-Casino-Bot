@@ -30,3 +30,11 @@ def load_claims():
 
 def save_claims(claims):
     save_json(claims, DAILY_FILE)
+
+def is_user_frozen(user_id: str, frozen_users: set) -> bool:
+    """Check if a user is frozen."""
+    return user_id in frozen_users
+
+def is_user_banned(user_id: str, banned_users: set) -> bool:
+    """Check if a user is banned."""
+    return user_id in banned_users

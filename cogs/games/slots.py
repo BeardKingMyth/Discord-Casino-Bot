@@ -1,6 +1,6 @@
 from discord.ext import commands
 import random
-from utils.helpers import load_balances, save_balances
+from utils.helpers import load_balances, save_balances, is_user_frozen, is_user_banned
 
 # ============================
 #   WEIGHTED SYMBOLS
@@ -45,14 +45,25 @@ SLOT_MACHINES = {
 # ============================
 
 class Slots(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, frozen_users=None, banned_users=None):
+        print("Slots cog initialized.")
         self.bot = bot
         self.balances = load_balances()
+        self.frozen_users = frozen_users if frozen_users else set()
+        self.banned_users = banned_users if banned_users else set()
 
     @commands.command(name="slots")
     async def slots(self, ctx, machine: str, bet: int):
         """Play the slot machine! Usage: !slots <small/big> <bet>"""
         user_id = str(ctx.author.id)
+
+        # Use helper functions
+        if is_user_banned(user_id, self.banned_users):
+            await ctx.send("You are banned from the economy and cannot play games.")
+            return
+        if is_user_frozen(user_id, self.frozen_users):
+            await ctx.send("You are currently frozen and cannot play games.")
+            return
 
         # Ensure player exists
         if user_id not in self.balances:
@@ -124,4 +135,9 @@ class Slots(commands.Cog):
 
 # Setup cog
 async def setup(bot):
-    await bot.add_cog(Slots(bot))
+    print("Slots cog loaded.")
+    # Pass in frozen/banned sets from the admin cog if desired
+    from cogs.admin import EconomyAdmin
+    frozen = getattr(bot.get_cog("EconomyAdmin"), "frozen_users", set())
+    banned = getattr(bot.get_cog("EconomyAdmin"), "banned_users", set())
+    await bot.add_cog(Slots(bot, frozen_users=frozen, banned_users=banned))
