@@ -22,7 +22,7 @@ async def on_ready():
 
 # Load all cogs in /cogs/games
 async def load_cogs():
-    for folder in ["cogs", "cogs/games", "cogs/games/dice"]:
+    for folder in ["cogs", "cogs/games", "cogs/games/dice", "cogs/games/cards"]:
         for filename in os.listdir(folder):
             if filename.endswith(".py"):
                 await bot.load_extension(f"{folder.replace('/', '.')}.{filename[:-3]}")
