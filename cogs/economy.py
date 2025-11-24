@@ -9,9 +9,9 @@ class Economy(commands.Cog):
         self.banned_users = banned_users if banned_users is not None else set()
         print("Economy cog initialized")
 
-        async def async_init(self):
-            self.balances = await load_balances()
-            print("Economy cog async initialized")
+    async def async_init(self):
+        self.balances = await load_balances()
+        print("Economy cog async initialized")
 
 
     @commands.command(name="balance")
